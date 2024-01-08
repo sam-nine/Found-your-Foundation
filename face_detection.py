@@ -1,13 +1,17 @@
 import cv2
 import os
-cascPath=os.path.dirname(cv2.__file__)+"/data/haarcascade_frontalface_default.xml"
+
+# Set the directory to save the extracted faces
+output_directory = "extracted_faces"
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
+
+cascPath = os.path.dirname(cv2.__file__) + "/data/haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(cascPath)
 video_capture = cv2.VideoCapture(0)
 
 while True:
-    # Capture frame-by-frame
     ret, frames = video_capture.read()
-
     gray = cv2.cvtColor(frames, cv2.COLOR_BGR2GRAY)
 
     faces = faceCascade.detectMultiScale(
@@ -18,14 +22,21 @@ while True:
         flags=cv2.CASCADE_SCALE_IMAGE
     )
 
-    # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
+        face_roi = frames[y:y+h, x:x+w]
         cv2.rectangle(frames, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-    # Display the resulting frame
     cv2.imshow('Video', frames)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key = cv2.waitKey(1) & 0xFF
+
+    if key == ord('q'):
         break
+    elif key == ord('s'):
+        # Save each detected face as a separate image when 's' is pressed
+        face_filename = os.path.join(output_directory, f"face_{len(os.listdir(output_directory))}.png")
+        cv2.imwrite(face_filename, face_roi)
+        print(f"Face saved as {face_filename}")
+
 video_capture.release()
 cv2.destroyAllWindows()
